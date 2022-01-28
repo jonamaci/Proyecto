@@ -1,0 +1,128 @@
+from robolink import *    # RoboDK API 
+from robodk import *      # Robot toolbox 
+from time import sleep
+
+def LimpiarPizarra():
+    RDK.Spray_Clear()
+    sleep(2)
+
+def ActivarTinta():
+    options_command = "NO_PROJECT PARTICLE=SPHERE(2,8) STEP=1x0 RAND=0 COLOR={}".format("red")
+    spray_id = RDK.Spray_Add(weldinggun,part,options_command)
+    RDK.Spray_SetState(SPRAY_ON, spray_id)
+
+
+def ApagarTinta():
+    RDK.Spray_SetState(SPRAY_OFF, -1)
+
+def GenerarCirculo(radio):
+    ApagarTinta() 
+    Ref1 = RDK.Item("Letras",ITEM_TYPE_TARGET)
+    Inicio = RDK.Item('Inicio',ITEM_TYPE_TARGET) 
+    RefTar = Ref1.Pose()
+    RefInicio = Inicio.Pose()  
+    b1 = rob.pose_2_xyzrpw(RefTar)     
+    t = -pi/2     
+    x0,y0,z0 = b1[:3] 
+    robot.MoveJ(RefTar)
+    robot.setSpeed(2000,400)
+    LimpiarPizarra()
+    ActivarTinta()  
+    while (t <=3*pi/2):
+        pos = transl(x0 + radio*cos(t), y0 + radio*sin(t), z0)*roty(-pi) 
+        robot.MoveJ(pos) 
+        if (t==-pi/2):       
+            sleep(2)     
+        t +=pi/360 
+    ApagarTinta()
+    robot.MoveJ(RefInicio)
+   
+def cuadrado():
+    ApagarTinta()
+    Ref1 = RDK.Item("Letras",ITEM_TYPE_TARGET)
+    Inicio = RDK.Item('Inicio',ITEM_TYPE_TARGET) 
+    RefTar = Ref1.Pose()
+    RefInicio = Inicio.Pose() 
+    b1 = rob.pose_2_xyzrpw(RefTar)     
+    t = -pi/2     
+    x0,y0,z0 = b1[:3]      
+    a=15    
+    b=5 
+    k=1    
+    robot.MoveL(RefTar)
+    robot.setSpeed(200,200) 
+    LimpiarPizarra()
+    a1=transl(x0+5*k,y0+15*k,z0)*rotx(-pi)
+    a2=transl(x0+5*k,y0,z0)*rotx(-pi)
+    a3=transl(x0-5*k,y0,z0)*rotx(-pi)
+    a4=transl(x0-5*k,y0+15*k,z0)*rotx(-pi)
+    a5=transl(x0+5*k,y0+15*k,z0)*rotx(-pi)
+
+    
+    sleep(2)
+    robot.MoveJ(a1)
+    ActivarTinta()
+    robot.MoveJ(a2)
+    robot.MoveJ(a3)
+    robot.MoveJ(a4)
+    robot.MoveJ(a5)
+    ApagarTinta()
+    robot.MoveJ(RefInicio)
+
+def elipse(a,b):
+    ApagarTinta() 
+    Ref1 = RDK.Item("Letras",ITEM_TYPE_TARGET)
+    Inicio = RDK.Item('Inicio',ITEM_TYPE_TARGET) 
+    RefTar = Ref1.Pose()
+    RefInicio = Inicio.Pose()  
+    b1 = rob.pose_2_xyzrpw(RefTar)     
+    t = -pi/2     
+    x0= b1[0]     
+    y0= b1[1]     
+    z0= b1[2]     
+    #a=10     
+    #b=5  
+    robot.MoveL(RefTar)
+    robot.setSpeed(2000,400)   
+    LimpiarPizarra()
+    while (t <=3*pi/2):         
+        pos = transl(x0 + a*cos(t), y0 + b*sin(t), z0)*rotx(-pi)         
+        robot.MoveJ(pos)    
+        if (t==-pi/2):       
+            sleep(2) 
+            ActivarTinta()   
+        t +=pi/360 
+    ApagarTinta()
+    robot.MoveJ(RefInicio)
+
+RDK = Robolink() 
+rob = robodk 
+ 
+robot = RDK.ItemUserPick('',ITEM_TYPE_ROBOT)   
+if not robot.Valid(): 
+    quit() 
+reference = robot.Parent() 
+robot.setPoseFrame(reference)
+
+#Obtenemos datos de los Frame
+frameletras = RDK.Item("FrameLetras",ITEM_TYPE_FRAME) 
+robot.setPoseFrame(frameletras)
+ 
+print(frameletras)
+
+# Item de la estacion
+weldinggun= RDK.Item('Welding Gun',ITEM_TYPE_TOOL)
+part  = RDK.Item('Part 1',ITEM_TYPE_OBJECT)
+
+formafigura = mbox('Forma de la soldado', entry = True)
+if (formafigura=='circular'):
+    radioIng1 = mbox('Ingrese radio', entry = True)
+    GenerarCirculo(radio = int(radioIng1))
+    
+if(formafigura=='cuadrado'):
+    cuadrado()
+    
+if(formafigura=='elipse'):
+    Va = mbox('Ingrese a', entry = True)
+    Vb = mbox('Ingrese b', entry = True)
+    elipse(a=int(Va),b=int(Vb))
